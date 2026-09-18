@@ -22,6 +22,8 @@
     --ceiling:#B026C4;
     --floor:#1E63D6;
     --ref:#B4890A;
+    --ma-fast:#0D7D75;
+    --ma-slow:#6D5ED1;
     --shadow:0 1px 2px rgba(20,24,20,.04),0 6px 20px -8px rgba(20,24,20,.10);
   }
   @media (prefers-color-scheme: dark){
@@ -40,6 +42,8 @@
       --ceiling:#E066F0;
       --floor:#5B9BFF;
       --ref:#E0B23B;
+      --ma-fast:#2FBFB2;
+      --ma-slow:#9C8CFF;
       --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px -8px rgba(0,0,0,.5);
     }
   }
@@ -58,6 +62,8 @@
     --ceiling:#E066F0;
     --floor:#5B9BFF;
     --ref:#E0B23B;
+    --ma-fast:#2FBFB2;
+    --ma-slow:#9C8CFF;
     --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px -8px rgba(0,0,0,.5);
   }
 
@@ -211,6 +217,41 @@
   .book-vol{text-align:right;color:var(--text-dim);}
 
   footer{margin-top:20px;padding-top:16px;border-top:1px solid var(--border);font-size:11.5px;color:var(--text-faint);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+
+  /* ---------- technical analysis ---------- */
+  .tech-card{margin-bottom:16px;}
+  .tech-symbol{color:var(--accent);}
+  .tech-legend{display:flex;gap:16px;font-size:11.5px;color:var(--text-dim);flex-wrap:wrap;}
+  .tech-legend span{display:inline-flex;align-items:center;gap:5px;}
+  .tech-legend i{width:14px;height:2px;display:inline-block;border-radius:2px;}
+  .tech-chart-wrap svg{width:100%;height:300px;display:block;overflow:visible;}
+
+  /* ---------- foreign trading ---------- */
+  .foreign-tabs{display:flex;gap:4px;}
+  .foreign-tabs button{border:1px solid var(--border);background:var(--surface);color:var(--text-dim);font-size:11.5px;font-weight:600;padding:4px 9px;border-radius:7px;cursor:pointer;font-family:inherit;}
+  .foreign-tabs button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-soft);}
+  .foreign-row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);}
+  .foreign-row:last-child{border-bottom:none;}
+  .foreign-ticker{display:flex;flex-direction:column;gap:1px;min-width:56px;}
+  .foreign-ticker b{font-size:13px;font-weight:700;}
+  .foreign-ticker small{font-size:10px;color:var(--text-faint);}
+  .foreign-bar-track{height:8px;border-radius:4px;background:var(--surface-alt);overflow:hidden;}
+  .foreign-bar-track i{display:block;height:100%;border-radius:4px;}
+  .foreign-val{font-size:12.5px;font-weight:700;text-align:right;min-width:64px;}
+  .foreign-room{font-size:10px;color:var(--text-faint);margin-top:2px;}
+
+  /* ---------- news ---------- */
+  .news-note{font-size:11px;color:var(--text-faint);margin-bottom:10px;}
+  .news-list{display:flex;flex-direction:column;max-height:360px;overflow-y:auto;}
+  .news-item{display:flex;flex-direction:column;gap:3px;padding:10px 0;border-bottom:1px solid var(--border);}
+  .news-item:last-child{border-bottom:none;}
+  .news-meta{display:flex;align-items:center;gap:8px;font-size:10.5px;color:var(--text-faint);}
+  .news-source{font-weight:700;color:var(--accent);}
+  .news-tag{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;background:var(--surface-alt);color:var(--text-dim);padding:1px 6px;border-radius:5px;}
+  .news-title{font-size:13px;line-height:1.45;color:var(--text);}
+  .live-dot{width:7px;height:7px;border-radius:50%;background:var(--down);box-shadow:0 0 0 3px rgba(214,39,60,.2);flex:none;animation:pulse 1.8s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+  @media (prefers-reduced-motion: reduce){.live-dot{animation:none;}}
 </style>
 </head>
 <body>
@@ -306,8 +347,45 @@
     <div class="card" id="detailCard"></div>
   </section>
 
+  <section class="card tech-card">
+    <div class="card-head">
+      <h2>Phân tích kỹ thuật — <span class="tech-symbol" id="techSymbol"></span></h2>
+      <div class="tech-legend">
+        <span><i style="background:var(--up)"></i>Nến tăng/giảm</span>
+        <span><i style="background:var(--ma-fast)"></i>MA10</span>
+        <span><i style="background:var(--ma-slow)"></i>MA20</span>
+      </div>
+    </div>
+    <div class="tech-chart-wrap">
+      <svg id="techChart" viewBox="0 0 640 300" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="chart-legend" id="techLegend"></div>
+  </section>
+
+  <section class="row-2col">
+    <div class="card">
+      <div class="card-head">
+        <h2>Giao dịch khối ngoại</h2>
+        <div class="foreign-tabs" id="foreignTabs">
+          <button data-side="buy" aria-pressed="true">Mua ròng</button>
+          <button data-side="sell" aria-pressed="false">Bán ròng</button>
+        </div>
+      </div>
+      <div id="foreignList"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Tin tức thị trường</h2>
+        <span class="status-pill" data-live="1"><span class="live-dot"></span>Cập nhật</span>
+      </div>
+      <div class="news-note">Nội dung mẫu để demo giao diện — thay bằng tin thật bằng cách chỉnh mảng NEWS trong mã nguồn.</div>
+      <div class="news-list" id="newsList"></div>
+    </div>
+  </section>
+
   <footer>
-    <span>Dữ liệu trên trang là dữ liệu minh họa để demo giao diện, không phản ánh giá giao dịch thực tế. Có thể kết nối API dữ liệu thị trường thực (SSI iBoard, VNDirect, TCBS, Fireant…) để thay thế phần mô phỏng.</span>
+    <span>Toàn bộ giá, biểu đồ kỹ thuật, giao dịch khối ngoại và tin tức trên trang là dữ liệu minh họa để demo giao diện, không phản ánh số liệu giao dịch thực tế. Có thể kết nối API dữ liệu thị trường thực (SSI iBoard, VNDirect, TCBS, Fireant…) để thay thế phần mô phỏng.</span>
     <span id="footerClock" class="mono"></span>
   </footer>
 </div>
@@ -384,6 +462,24 @@
     return out;
   }
 
+  function genOHLC(seed, n, endClose, tran, sanGia){
+    const r = mulberry32(seed);
+    const closes = genSeries(seed+7, n, endClose*(0.9+r()*0.06), 0);
+    closes[closes.length-1] = endClose;
+    let prevClose = closes[0]*(1+(r()-0.5)*0.01);
+    return closes.map((c,i)=>{
+      const o = i===0 ? prevClose : closes[i-1]*(1+(r()-0.5)*0.006);
+      const atr = Math.abs(c-o)*(0.4+r()*0.9) + endClose*0.002;
+      const h = Math.min(tran, Math.max(o,c)+atr);
+      const l = Math.max(sanGia, Math.min(o,c)-atr);
+      const v = Math.round(80000 + r()*3000000);
+      return {o:Math.round(o*100)/100, h:Math.round(h*100)/100, l:Math.round(l*100)/100, c:Math.round(c*100)/100, v};
+    });
+  }
+  function movingAvg(values, period){
+    return values.map((_,i)=> i<period-1 ? null : values.slice(i-period+1,i+1).reduce((a,b)=>a+b,0)/period);
+  }
+
   const STOCKS = RAW.map(([ma,ten,san,tc])=>{
     const bd = BIEN_DO[san];
     const tran = Math.round(tc*(1+bd)*100)/100;
@@ -401,8 +497,14 @@
     const kl = Math.round((50000 + r()*4200000));
     const series = genSeries(seed, 26, tc, (gia-tc)/tc*4);
     series[series.length-1] = gia;
+    const ohlc = genOHLC(seed, 30, gia, tran, sanGia);
+    const fr = mulberry32(seed+91);
+    const buyVal = Math.round((fr()*fr()*180)*10)/10;
+    const sellVal = Math.round((fr()*fr()*180)*10)/10;
+    const room = Math.round(fr()*49*10)/10;
     return {ma,ten,san,tc,tran,san_gia:sanGia,gia,cao:Math.round(cao*100)/100,thap:Math.round(thap*100)/100,kl,
-      thaydoi: Math.round((gia-tc)*100)/100, pct: (gia-tc)/tc*100, series,
+      thaydoi: Math.round((gia-tc)*100)/100, pct: (gia-tc)/tc*100, series, ohlc,
+      foreignBuy:buyVal, foreignSell:sellVal, foreignNet:Math.round((buyVal-sellVal)*10)/10, foreignRoom:room,
       cls: classify(gia,tc,tran,sanGia)};
   });
 
@@ -710,10 +812,139 @@
     `;
   }
 
+  function renderTechChart(ma){
+    const s = STOCKS.find(x=>x.ma===ma);
+    document.getElementById("techSymbol").textContent = s.ma + " · " + s.ten;
+    const ohlc = s.ohlc;
+    const closes = ohlc.map(c=>c.c);
+    const ma10 = movingAvg(closes,10);
+    const ma20 = movingAvg(closes,20);
+    const W=640,H=300,padL=6,padR=6,priceTop=10,priceH=200,gapY=10,volH=60;
+    const priceBottom = priceTop+priceH;
+    const volTop = priceBottom+gapY;
+    const volBottom = volTop+volH;
+    const n = ohlc.length;
+    const allVals = ohlc.flatMap(c=>[c.h,c.l]).concat(ma10.filter(v=>v!=null)).concat(ma20.filter(v=>v!=null));
+    const min = Math.min(...allVals), max = Math.max(...allVals);
+    const span = (max-min)||1;
+    const maxVol = Math.max(...ohlc.map(c=>c.v));
+    const slot = (W-padL-padR)/n;
+    const cw = Math.max(2, slot*0.6);
+    const xC = i => padL + slot*(i+0.5);
+    const yP = v => priceTop + priceH*(1-(v-min)/span);
+    const yV = v => volTop + volH*(1-v/maxVol);
+
+    let wicks="", bodies="", vols="";
+    ohlc.forEach((c,i)=>{
+      const up = c.c>=c.o;
+      const color = up? "var(--up)":"var(--down)";
+      const x=xC(i);
+      wicks += `<line x1="${x.toFixed(1)}" y1="${yP(c.h).toFixed(1)}" x2="${x.toFixed(1)}" y2="${yP(c.l).toFixed(1)}" stroke="${color}" stroke-width="1"/>`;
+      const bodyTop = yP(Math.max(c.o,c.c));
+      const bodyH = Math.max(1, Math.abs(yP(c.o)-yP(c.c)));
+      bodies += `<rect x="${(x-cw/2).toFixed(1)}" y="${bodyTop.toFixed(1)}" width="${cw.toFixed(1)}" height="${bodyH.toFixed(1)}" fill="${color}"/>`;
+      const volTopY = yV(c.v);
+      vols += `<rect x="${(x-cw/2).toFixed(1)}" y="${volTopY.toFixed(1)}" width="${cw.toFixed(1)}" height="${(volBottom-volTopY).toFixed(1)}" fill="${color}" opacity="0.55"/>`;
+    });
+
+    function maPath(vals, color){
+      let d="", started=false;
+      vals.forEach((v,i)=>{
+        if(v==null) return;
+        const x=xC(i), y=yP(v);
+        d += (started?"L":"M")+x.toFixed(1)+","+y.toFixed(1)+" ";
+        started=true;
+      });
+      return d ? `<path d="${d}" fill="none" stroke="${color}" stroke-width="1.6"/>` : "";
+    }
+
+    const gridLines = [0,0.5,1].map(t=>{
+      const y = priceTop+priceH*t;
+      const val = max-span*t;
+      return `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="var(--border)" stroke-width="1" stroke-dasharray="2,3"/>
+        <text x="${W-padR}" y="${(y-3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--text-faint)" font-family="IBM Plex Mono">${val.toFixed(1)}</text>`;
+    }).join("");
+    const volLabel = `<text x="${W-padR}" y="${(volTop+10).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--text-faint)" font-family="IBM Plex Mono">KL</text>`;
+
+    document.getElementById("techChart").innerHTML = `
+      ${gridLines}
+      <line x1="${padL}" y1="${volBottom.toFixed(1)}" x2="${W-padR}" y2="${volBottom.toFixed(1)}" stroke="var(--border)" stroke-width="1"/>
+      ${vols}
+      ${wicks}
+      ${bodies}
+      ${maPath(ma10,"var(--ma-fast)")}
+      ${maPath(ma20,"var(--ma-slow)")}
+      ${volLabel}
+    `;
+    document.getElementById("techLegend").innerHTML = `<span>Phiên -${n}</span><span>Phiên -${Math.round(n/2)}</span><span>Phiên hiện tại</span>`;
+  }
+
+  let foreignSide = "buy";
+  function renderForeign(){
+    const sorted = [...STOCKS].sort((a,b)=> foreignSide==="buy" ? b.foreignNet-a.foreignNet : a.foreignNet-b.foreignNet).slice(0,8);
+    const maxAbs = Math.max(...sorted.map(s=>Math.abs(s.foreignNet)), 1);
+    document.getElementById("foreignList").innerHTML = sorted.map(s=>{
+      const up = s.foreignNet>=0;
+      const cls = up ? "up-text" : "down-text";
+      const barColor = up ? "var(--up)" : "var(--down)";
+      const width = Math.abs(s.foreignNet)/maxAbs*100;
+      return `<div class="foreign-row" data-ma="${s.ma}">
+        <div class="foreign-ticker"><b>${s.ma}</b><small>${s.san}</small></div>
+        <div>
+          <div class="foreign-bar-track"><i style="width:${width.toFixed(0)}%;background:${barColor}"></i></div>
+          <div class="foreign-room">Room còn lại ${s.foreignRoom.toFixed(1)}%</div>
+        </div>
+        <div>
+          <div class="foreign-val mono ${cls}">${fmtSigned(s.foreignNet)} tỷ</div>
+        </div>
+      </div>`;
+    }).join("");
+    [...document.querySelectorAll(".foreign-row")].forEach(row=>{
+      row.addEventListener("click", ()=> selectStock(row.dataset.ma));
+    });
+  }
+  document.getElementById("foreignTabs").addEventListener("click", e=>{
+    const btn = e.target.closest("button[data-side]");
+    if(!btn) return;
+    foreignSide = btn.dataset.side;
+    [...document.querySelectorAll("#foreignTabs button")].forEach(b=>b.setAttribute("aria-pressed", b===btn));
+    renderForeign();
+  });
+
+  // Nội dung mẫu — chỉnh sửa mảng này để cập nhật tin thật.
+  const NEWS = [
+    {minutesAgo:6,  source:"CafeF",                 tag:"Thị trường",  title:"VN-Index giằng co quanh mốc tham chiếu, thanh khoản nhóm ngân hàng dẫn dắt phiên sáng."},
+    {minutesAgo:24, source:"VietStock",              tag:"Doanh nghiệp",title:"Nhiều doanh nghiệp niêm yết công bố kế hoạch chia cổ tức bằng tiền mặt trong quý tới."},
+    {minutesAgo:41, source:"Đầu tư Chứng khoán",     tag:"Khối ngoại",  title:"Khối ngoại duy trì trạng thái mua ròng phiên thứ ba liên tiếp tại nhóm bluechip."},
+    {minutesAgo:75, source:"NDH",                    tag:"Vĩ mô",       title:"Ngân hàng Nhà nước tiếp tục điều hành lãi suất theo hướng ổn định, hỗ trợ thanh khoản hệ thống."},
+    {minutesAgo:118,source:"VnEconomy",              tag:"Thị trường",  title:"Nhóm cổ phiếu bất động sản khu công nghiệp thu hút dòng tiền trở lại sau nhịp điều chỉnh."},
+    {minutesAgo:190,source:"CafeF",                  tag:"Doanh nghiệp",title:"Một số công ty chứng khoán điều chỉnh dự báo lợi nhuận quý dựa trên diễn biến giao dịch gần đây."}
+  ];
+  function relativeTime(mins){
+    if(mins < 60) return `${mins} phút trước`;
+    const h = Math.floor(mins/60), m = mins%60;
+    return m===0 ? `${h} giờ trước` : `${h} giờ ${m} phút trước`;
+  }
+  function renderNews(){
+    const startedAt = renderNews._startedAt || (renderNews._startedAt = Date.now());
+    const elapsedMin = Math.floor((Date.now()-startedAt)/60000);
+    const sorted = [...NEWS].sort((a,b)=>a.minutesAgo-b.minutesAgo);
+    document.getElementById("newsList").innerHTML = sorted.map(item=>`
+      <div class="news-item">
+        <div class="news-meta">
+          <span class="news-source">${item.source}</span>
+          <span class="news-tag">${item.tag}</span>
+          <span>${relativeTime(item.minutesAgo+elapsedMin)}</span>
+        </div>
+        <div class="news-title">${item.title}</div>
+      </div>`).join("");
+  }
+
   function selectStock(ma){
     selectedMa = ma;
     renderBoard();
     renderDetail(ma);
+    renderTechChart(ma);
   }
 
   function updateClock(){
@@ -749,8 +980,12 @@
   renderMovers();
   renderBoard();
   renderDetail(selectedMa);
+  renderTechChart(selectedMa);
+  renderForeign();
+  renderNews();
   updateClock();
   setInterval(updateClock, 1000);
+  setInterval(renderNews, 30000);
 })();
 </script>
 </body>
